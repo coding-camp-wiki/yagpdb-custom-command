@@ -2,6 +2,13 @@
 {{ $embedDescription := "Which staff members are currently available to help?" }}
 {{ $embedColor := 12426513 }}
 
+{{/* {{ $availableEmoji := "📳" }} */}}
+{{ $availableEmoji := "💚" }}
+{{ $awayEmoji := "📴" }}
+{{ $removeEmoji := "🛑" }}
+
+{{ $emojiSet := cslice $availableEmoji $awayEmoji $removeEmoji }}
+
 {{ $fieldAvailableName := "Ready to Help!" }}
 {{ $fieldAwayName := "Away" }}
 {{ $fieldEmptyValue := "(none)" }}
@@ -14,7 +21,7 @@
 }}
 
 {{ $targetMessageId := .ExecData.targetMessageId }}
-{{ $operation := .ExecData.operation }}
+{{ $targetEmoji := .ExecData.emoji }}
 {{ $isReactionAdded := .ExecData.isReactionAdded }}
 {{ $targetUser := .ExecData.user }}
 
@@ -30,7 +37,9 @@
     {{ $embed := cembed $embed }}
 
     {{ sendMessage nil $embed }}
-{{ else }}
+
+{{/* update existing embed, if present, based on expected emojis */}}
+{{ else if in $emojiSet $targetEmoji }}
     {{ $targetMessage := getMessage nil $targetMessageId }}
 
     {{ range $index, $embed := $targetMessage.Embeds }}
