@@ -8,6 +8,15 @@
 
 {{ $emojiSet := cslice $availableEmoji $awayEmoji $removeEmoji }}
 
+{{ $embedFooter := (sdict
+    "text" (printf
+        "%s = available\n%s = away\n%s = remove"
+        $availableEmoji
+        $awayEmoji
+        $removeEmoji
+    )
+) }}
+
 {{ $fieldAvailableName := "Ready to Help!" }}
 {{ $fieldAwayName := "Away" }}
 {{ $fieldEmptyValue := "(none)" }}
@@ -31,6 +40,7 @@
     "title" $embedTitle
     "description" $embedDescription
     "color" $embedColor
+    "footer" $embedFooter
 ) }}
 
 {{/* initial setup */}}
