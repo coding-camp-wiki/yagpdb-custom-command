@@ -6,9 +6,10 @@
 {{ $fieldValueAway := $fieldValueEmpty }}
 
 {{ $emojiAvailable := "✅" }}
-{{ $emojiRemove := "🛑" }}
+{{ $emojiAway := "🛑" }}
+{{ $emojiReset := "🔄" }}
 
-{{ $emojiSet := cslice $emojiAvailable $emojiRemove }}
+{{ $emojiSet := cslice $emojiAvailable $emojiAway $emojiReset }}
 
 {{ define "embedDict" }}
     {{ $title := .title }}
@@ -59,19 +60,21 @@
     {{ end }}
 
 {{/* update existing embed, if present, based on expected emojis */}}
-{{ else if in $emojiSet $reactEmoji }}
+{{ else if and (in $emojiSet $reactEmoji) ($isReactionAdded) }}
     {{ $reactMessage := getMessage nil $reactMessageId }}
 
     {{ range $index, $embed := $reactMessage.Embeds }}
         {{ if eq $embed.Title $embedTitle }}
             {{ if eq $reactEmoji $emojiAvailable }}
-                {{ if $isReactionAdded }}
-                    reaction added
-                    {{ $fieldValueAvailable = joinStr "\n" $reactUser.Mention }}
-                {{ else }}
-                    reaction removed
-                    {{ $fieldValueAway = joinStr "\n" $reactUser.Mention }}
-                {{ end }}
+                updating available...
+                {{ $fieldValueAvailable = joinStr "\n" $reactUser.Mention }}
+            {{ else if eq $reactEmoji $emojiAway }}
+                updating away...
+                {{ $fieldValueAway = joinStr "\n" $reactUser.Mention }}
+            {{ else if eq $reactEmoji $emojiReset }}
+                resetting...
+                {{ $fieldValueAvailable = $fieldValueEmpty }}
+                {{ $fieldValueAway = $fieldValueEmpty }}
             {{ end }}
 
             {{ template "embedDict" ($embedDict = sdict
@@ -83,4 +86,8 @@
             {{ editMessage nil $reactMessageId (complexMessageEdit "embed" $embedDict.result) }}
         {{ end }}
     {{ end }}
+{{ end }}
+
+{{ if $isReactionAdded }}
+    {{ deleteMessageReaction nil $reactMessageId $reactUserId $reactEmoji }}
 {{ end }}
