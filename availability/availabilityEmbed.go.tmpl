@@ -1,0 +1,32 @@
+{{ $embedTitle := "Staff In/Out" }}
+{{ $embedDescription := "Which staff members are currently available to help?" }}
+{{ $embedColor := 12426513 }}
+
+{{ $fieldAvailableName := "Ready to Help!" }}
+{{ $fieldAwayName := "Away" }}
+
+{{ $updateMessageId := .ExecData.messageId }}
+{{ $updateOperation := .ExecData.operation }}
+{{ $isReactionAdded := .ExecData.isReactionAdded }}
+{{ $updateUser := .ExecData.user }}
+
+{{/* initial setup */}}
+{{ if not .ExecData }}
+    {{ $embed := cembed
+        "title" $embedTitle
+        "description" $embedDescription
+        "color" $embedColor
+        "fields" (cslice
+            (sdict "name" $fieldAvailableName "value" "Daine" "inline" true)
+            (sdict "name" $fieldAwayName "value" "Summer" "inline" true)
+        )
+    }}
+
+    {{ sendMessage nil $embed }}
+{{ else }}
+    {{ $updateMessage := getMessage nil $updateMessageId }}
+
+    {{ range $index, $element := $updateMessage.Embeds }}
+        {{ $index }} : {{ $element }}
+    {{ end }}
+{{ end }}

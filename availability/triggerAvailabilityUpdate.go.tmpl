@@ -1,0 +1,30 @@
+{{/* triggerAvailabilityUpdate */}}
+{{ $thisCmd := 19 }}
+{{ $embedCmd := 18 }}
+
+{{/* {{ $availableEmoji := "📳" }} */}}
+{{ $availableEmoji := "💚" }}
+{{ $awayEmoji := "📴" }}
+{{ $removeEmoji := "🛑" }}
+
+{{ $messageId := .Reaction.MessageID }}
+{{ $operation := "" }}
+{{ $isReactionAdded := .ReactionAdded }}
+{{ $user := .Reaction.UserID }}
+
+{{ if eq .Reaction.Emoji.Name $availableEmoji }}
+    {{ $operation = "available" }}
+{{ else if eq .Reaction.Emoji.Name $awayEmoji }}
+    {{ $operation = "away" }}
+{{ else if eq .Reaction.Emoji.Name $removeEmoji }}
+    {{ $operation = "remove" }}
+{{ end }}
+
+{{ if $operation }}
+    {{ execCC $embedCmd nil 0 (sdict
+        "messageId" $messageId
+        "operation" $operation
+        "isReactionAdded" $isReactionAdded
+        "user" $user
+    ) }}
+{{ end }}
