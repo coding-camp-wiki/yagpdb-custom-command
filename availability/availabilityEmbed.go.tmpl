@@ -4,23 +4,30 @@
 
 {{ $fieldAvailableName := "Ready to Help!" }}
 {{ $fieldAwayName := "Away" }}
+{{ $fieldEmptyValue := "(none)" }}
+{{ $fieldEmptyAvailable := (sdict "name" $fieldAvailableName "value" $fieldEmptyValue "inline" true) }}
+{{ $fieldEmptyAway := (sdict "name" $fieldAwayName "value" $fieldEmptyValue "inline" true) }}
+{{ $fieldsEmpty := (cslice
+        $fieldEmptyAvailable
+        $fieldEmptyAway
+    )
+}}
 
 {{ $targetMessageId := .ExecData.targetMessageId }}
 {{ $operation := .ExecData.operation }}
 {{ $isReactionAdded := .ExecData.isReactionAdded }}
 {{ $targetUser := .ExecData.user }}
 
+{{ $embed := (sdict
+    "title" $embedTitle
+    "description" $embedDescription
+    "color" $embedColor
+) }}
+
 {{/* initial setup */}}
 {{ if not .ExecData }}
-    {{ $embed := cembed
-        "title" $embedTitle
-        "description" $embedDescription
-        "color" $embedColor
-        "fields" (cslice
-            (sdict "name" $fieldAvailableName "value" "Daine" "inline" true)
-            (sdict "name" $fieldAwayName "value" "Summer" "inline" true)
-        )
-    }}
+    {{ $embed.Set "fields" $fieldsEmpty }}
+    {{ $embed := cembed $embed }}
 
     {{ sendMessage nil $embed }}
 {{ else }}
