@@ -60,9 +60,18 @@
 
     {{ range $index, $embed := $targetMessage.Embeds }}
         {{ if eq $embed.Title $embedTitle }}
+            {{ $fieldAvailableValue := $fieldEmptyValue }}
+            {{ $fieldAwayValue := $fieldEmptyValue }}
+
+            {{ if eq $targetEmoji $availableEmoji }}
+                {{ $fieldAvailableValue = joinStr "\n" $targetUser.Mention }}
+            {{ else if eq $targetEmoji $awayEmoji }}
+                {{ $fieldAwayValue = joinStr "\n" $targetUser.Mention }}
+            {{ end }}
+
             {{ $fields := (cslice
-                (sdict "name" $fieldAvailableName "value" $targetUser.Mention "inline" $fieldInline)
-                (sdict "name" $fieldAwayName "value" $targetUser.Mention "inline" $fieldInline)
+                (sdict "name" $fieldAvailableName "value" $fieldAvailableValue "inline" $fieldInline)
+                (sdict "name" $fieldAwayName "value" $fieldAwayValue "inline" $fieldInline)
             ) }}
 
             {{ $embedDict.Set "fields" $fields }}
