@@ -59,6 +59,8 @@
         {{ addMessageReactions nil $messageId . }}
     {{ end }}
 
+    {{ deleteTrigger 1 }}
+
 {{/* update existing embed, if present, based on expected emojis */}}
 {{ else if and (in $emojiSet $reactEmoji) ($isReactionAdded) }}
     {{ $reactMessage := getMessage nil $reactMessageId }}
