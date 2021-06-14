@@ -1,27 +1,48 @@
-{{ $embedTitle := "Staff In/Out" }}
+{{ $settings := (sdict
+    "title" "Staff In/Out"
+    "color" 12426513
+    "description" "Which staff members are currently available to help?"
 
-{{ $fieldValueEmpty := "(none)" }}
+    "fieldNameAvailable" "Ready to Help!"
+    "fieldNameAway" "Away"
+    "fieldValueEmpty" "(none)"
 
-{{ $fieldValueAvailable := $fieldValueEmpty }}
-{{ $fieldValueAway := $fieldValueEmpty }}
+    "emojiAvailable" "✅"
+    "emojiAway" "🛑"
+    "emojiReset" "🔄"
 
-{{ $emojiAvailable := "✅" }}
-{{ $emojiAway := "🛑" }}
-{{ $emojiReset := "🔄" }}
+    "showFieldInline" true
+) }}
 
-{{ $emojiSet := cslice $emojiAvailable $emojiAway $emojiReset }}
+{{/* {{ $fieldValueAvailable := $settings.fieldValueEmpty }} */}}
+{{ $fieldValueAvailable := "Carl" }}
+{{/* {{ $fieldValueAway := $settings.fieldValueEmpty }} */}}
+{{ $fieldValueAway := "Scout\nYAG" }}
+
+{{ $emojiSet := cslice
+    $settings.emojiAvailable
+    $settings.emojiAway
+    $settings.emojiReset
+}}
+
+{{ $reactMessageId := .ExecData.messageId }}
+{{ $reactEmoji := .ExecData.emoji }}
+{{ $isReactionAdded := .ExecData.isReactionAdded }}
+{{ $reactUserId := .ExecData.userId }}
+{{ $reactUser := userArg $reactUserId }}
 
 {{ define "embedDict" }}
-    {{ $title := .title }}
-    {{ $description := "Which staff members are currently available to help?" }}
-    {{ $color := 12426513 }}
+    {{ $fieldAvailable := (sdict
+        "name" .settings.fieldNameAvailable
+        "value" .available
+        "inline" .settings.showFieldInline
+    ) }}
 
-    {{ $fieldNameAvailable := "Ready to Help!" }}
-    {{ $fieldNameAway := "Away" }}
-    {{ $fieldInline := true }}
-
-    {{ $fieldAvailable := (sdict "name" $fieldNameAvailable "value" .available "inline" $fieldInline) }}
-    {{ $fieldAway := (sdict "name" $fieldNameAway "value" .away "inline" $fieldInline) }}
+    {{ $fieldAway := (sdict
+        "name" .settings.fieldNameAway
+        "value" .away
+        "inline" .settings.showFieldInline
+    ) }}
 
     {{ $fields := (cslice
             $fieldAvailable
@@ -30,27 +51,21 @@
     }}
 
     {{ .Set "result" (sdict
-        "title" $title
-        "description" $description
-        "color" $color
+        "title" .settings.title
+        "color" .settings.color
+        "description" .settings.description
         "fields" $fields
     ) }}
 {{ end }}
 
-{{ template "embedDict" ($embedDict := sdict
-    "title" $embedTitle
-    "available" $fieldValueAvailable
-    "away" $fieldValueAway
-) }}
-
-{{ $reactMessageId := .ExecData.messageId }}
-{{ $reactEmoji := .ExecData.emoji }}
-{{ $isReactionAdded := .ExecData.isReactionAdded }}
-{{ $reactUserId := .ExecData.userId }}
-{{ $reactUser := userArg $reactUserId }}
-
 {{/* initial setup */}}
 {{ if not .ExecData }}
+    {{ template "embedDict" ($embedDict := sdict
+        "settings" $settings
+        "available" $fieldValueAvailable
+        "away" $fieldValueAway
+    ) }}
+
     {{ $embed := cembed $embedDict.result }}
 
     {{ $messageId := sendMessageRetID nil $embed }}
@@ -66,21 +81,70 @@
     {{ $reactMessage := getMessage nil $reactMessageId }}
 
     {{ range $index, $embed := $reactMessage.Embeds }}
-        {{ if eq $embed.Title $embedTitle }}
-            {{ if eq $reactEmoji $emojiAvailable }}
-                updating available...
-                {{ $fieldValueAvailable = joinStr "\n" $reactUser.Mention }}
-            {{ else if eq $reactEmoji $emojiAway }}
-                updating away...
-                {{ $fieldValueAway = joinStr "\n" $reactUser.Mention }}
-            {{ else if eq $reactEmoji $emojiReset }}
-                resetting...
-                {{ $fieldValueAvailable = $fieldValueEmpty }}
-                {{ $fieldValueAway = $fieldValueEmpty }}
+        {{ if eq $embed.Title $settings.title }}
+            {{/* get current field values */}}
+            {{ range $embed.Fields }}
+                {{ if eq .Name $settings.fieldNameAvailable }}
+                    {{ $fieldValueAvailable = .Value }}
+                {{ else if eq .Name $settings.fieldNameAway }}
+                    {{ $fieldValueAway = .Value }}
+                {{ end }}
             {{ end }}
 
-            {{ template "embedDict" ($embedDict = sdict
-                "title" $embedTitle
+            {{/* add to available */}}
+            {{ if eq $reactEmoji $settings.emojiAvailable }}
+                {{/* replace empty */}}
+                {{ if eq $fieldValueAvailable $settings.fieldValueEmpty }}
+                    {{ $fieldValueAvailable = $reactUser.Mention }}
+
+                {{/* else keep existing and add to */}}
+                {{ else }}
+                    {{ $split := split $fieldValueAvailable "\n" }}
+
+                    {{ if not (in $split $reactUser.Mention) }}
+                        {{ $fieldValueAvailable = joinStr "\n" $split $reactUser.Mention }}
+                    {{ end }}
+                {{ end }}
+
+                {{/* update opposite list */}}
+                {{ $fieldValueAway = reReplace $reactUser.Mention $fieldValueAway "" }}
+
+                {{/* if no names remaning, set to empty value */}}
+                {{ if not $fieldValueAway }}
+                    {{ $fieldValueAway = $settings.fieldValueEmpty }}
+                {{ end }}
+
+            {{/* add to away */}}
+            {{ else if eq $reactEmoji $settings.emojiAway }}
+                {{/* replace empty */}}
+                {{ if eq $fieldValueAway $settings.fieldValueEmpty }}
+                    {{ $fieldValueAway = $reactUser.Mention }}
+
+                {{/* else keep existing and add to */}}
+                {{ else }}
+                    {{ $split := split $fieldValueAway "\n" }}
+
+                    {{ if not (in $split $reactUser.Mention) }}
+                        {{ $fieldValueAway = joinStr "\n" $split $reactUser.Mention }}
+                    {{ end }}
+                {{ end }}
+
+                {{/* update opposite list */}}
+                {{ $fieldValueAvailable = reReplace $reactUser.Mention $fieldValueAvailable "" }}
+
+                {{/* if no names remaning, set to empty value */}}
+                {{ if not $fieldValueAvailable }}
+                    {{ $fieldValueAvailable = $settings.fieldValueEmpty }}
+                {{ end }}
+
+            {{/* reset */}}
+            {{ else if eq $reactEmoji $settings.emojiReset }}
+                {{ $fieldValueAvailable = $settings.fieldValueEmpty }}
+                {{ $fieldValueAway = $settings.fieldValueEmpty }}
+            {{ end }}
+
+            {{ template "embedDict" ($embedDict := sdict
+                "settings" $settings
                 "available" $fieldValueAvailable
                 "away" $fieldValueAway
             ) }}
