@@ -2,13 +2,13 @@
 {{ $thisCmd := 2 }}
 {{ $embedCmd := 1 }}
 
-{{ $targetMessageId := .Reaction.MessageID }}
+{{ $messageId := .Reaction.MessageID }}
 {{ $emoji := .Reaction.Emoji.Name }}
 {{ $isReactionAdded := .ReactionAdded }}
 {{ $userId := .Reaction.UserID }}
 
 {{ execCC $embedCmd nil 0 (sdict
-    "targetMessageId" $targetMessageId
+    "messageId" $messageId
     "emoji" $emoji
     "isReactionAdded" $isReactionAdded
     "userId" $userId

@@ -2,50 +2,51 @@
 {{ $embedDescription := "Which staff members are currently available to help?" }}
 {{ $embedColor := 12426513 }}
 
-{{ $availableEmoji := "📳" }}
-{{ $awayEmoji := "📴" }}
-{{ $removeEmoji := "🛑" }}
+{{ $emojiAvailable := "✅" }}
+{{ $emojiRemove := "🛑" }}
 
-{{ $emojiSet := cslice $availableEmoji $awayEmoji $removeEmoji }}
+{{ $emojiSet := cslice $emojiAvailable $emojiRemove }}
 
 {{ $embedFooter := (sdict
     "text" (printf
-        "%s = available\n%s = away\n%s = remove"
-        $availableEmoji
-        $awayEmoji
-        $removeEmoji
+        "%s = available, %s = remove"
+        $emojiAvailable
+        $emojiRemove
     )
 ) }}
 
-{{ $fieldAvailableName := "Ready to Help!" }}
-{{ $fieldAwayName := "Away" }}
-{{ $fieldEmptyValue := "(none)" }}
+{{ $fieldNameAvailable := "Ready to Help!" }}
+{{ $fieldNameAway := "Away" }}
+{{ $fieldValueEmpty := "(none)" }}
+
+{{ $fieldValueAvailable := $fieldValueEmpty }}
+{{ $fieldValueAway := $fieldValueEmpty }}
 {{ $fieldInline := true }}
 
-{{ $fieldEmptyAvailable := (sdict "name" $fieldAvailableName "value" $fieldEmptyValue "inline" $fieldInline) }}
-{{ $fieldEmptyAway := (sdict "name" $fieldAwayName "value" $fieldEmptyValue "inline" $fieldInline) }}
-{{ $fieldsEmpty := (cslice
-        $fieldEmptyAvailable
-        $fieldEmptyAway
+{{ $fieldAvailable := (sdict "name" $fieldNameAvailable "value" $fieldValueAvailable "inline" $fieldInline) }}
+{{ $fieldAway := (sdict "name" $fieldNameAway "value" $fieldValueAway "inline" $fieldInline) }}
+{{ $fields := (cslice
+        $fieldAvailable
+        $fieldAway
     )
 }}
-
-{{ $targetMessageId := .ExecData.targetMessageId }}
-{{ $targetEmoji := .ExecData.emoji }}
-{{ $isReactionAdded := .ExecData.isReactionAdded }}
-{{ $targetUserId := .ExecData.userId }}
-{{ $targetUser := userArg $targetUserId }}
 
 {{ $embedDict := (sdict
     "title" $embedTitle
     "description" $embedDescription
     "color" $embedColor
     "footer" $embedFooter
+    "fields" $fields
 ) }}
+
+{{ $reactMessageId := .ExecData.messageId }}
+{{ $reactEmoji := .ExecData.emoji }}
+{{ $isReactionAdded := .ExecData.isReactionAdded }}
+{{ $reactUserId := .ExecData.userId }}
+{{ $reactUser := userArg $reactUserId }}
 
 {{/* initial setup */}}
 {{ if not .ExecData }}
-    {{ $embedDict.Set "fields" $fieldsEmpty }}
     {{ $embed := cembed $embedDict }}
 
     {{ $messageId := sendMessageRetID nil $embed }}
@@ -55,28 +56,30 @@
     {{ end }}
 
 {{/* update existing embed, if present, based on expected emojis */}}
-{{ else if in $emojiSet $targetEmoji }}
-    {{ $targetMessage := getMessage nil $targetMessageId }}
+{{ else if in $emojiSet $reactEmoji }}
+    {{ $reactMessage := getMessage nil $reactMessageId }}
 
-    {{ range $index, $embed := $targetMessage.Embeds }}
+    {{ range $index, $embed := $reactMessage.Embeds }}
         {{ if eq $embed.Title $embedTitle }}
-            {{ $fieldAvailableValue := $fieldEmptyValue }}
-            {{ $fieldAwayValue := $fieldEmptyValue }}
-
-            {{ if eq $targetEmoji $availableEmoji }}
-                {{ $fieldAvailableValue = joinStr "\n" $targetUser.Mention }}
-            {{ else if eq $targetEmoji $awayEmoji }}
-                {{ $fieldAwayValue = joinStr "\n" $targetUser.Mention }}
+            {{ if eq $reactEmoji $emojiAvailable }}
+                {{ if $isReactionAdded }}
+                    {{ $fieldValueAvailable = joinStr "\n" $reactUser.Mention }}
+                {{ else }}
+                    {{ $fieldValueAway = joinStr "\n" $reactUser.Mention }}
+                {{ end }}
             {{ end }}
 
+            {{ $fieldAvailable := (sdict "name" $fieldNameAvailable "value" $fieldValueAvailable "inline" $fieldInline) }}
+            {{ $fieldAway := (sdict "name" $fieldNameAway "value" $fieldValueAway "inline" $fieldInline) }}
             {{ $fields := (cslice
-                (sdict "name" $fieldAvailableName "value" $fieldAvailableValue "inline" $fieldInline)
-                (sdict "name" $fieldAwayName "value" $fieldAwayValue "inline" $fieldInline)
-            ) }}
+                    $fieldAvailable
+                    $fieldAway
+                )
+            }}
 
             {{ $embedDict.Set "fields" $fields }}
 
-            {{ editMessage nil $targetMessageId (complexMessageEdit "embed" $embedDict) }}
+            {{ editMessage nil $reactMessageId (complexMessageEdit "embed" $embedDict) }}
         {{ end }}
     {{ end }}
 {{ end }}
