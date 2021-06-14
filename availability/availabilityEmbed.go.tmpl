@@ -1,42 +1,45 @@
 {{ $embedTitle := "Staff In/Out" }}
-{{ $embedDescription := "Which staff members are currently available to help?" }}
-{{ $embedColor := 12426513 }}
+
+{{ $fieldValueEmpty := "(none)" }}
+
+{{ $fieldValueAvailable := $fieldValueEmpty }}
+{{ $fieldValueAway := $fieldValueEmpty }}
 
 {{ $emojiAvailable := "✅" }}
 {{ $emojiRemove := "🛑" }}
 
 {{ $emojiSet := cslice $emojiAvailable $emojiRemove }}
 
-{{ $embedFooter := (sdict
-    "text" (printf
-        "%s = available, %s = remove"
-        $emojiAvailable
-        $emojiRemove
-    )
-) }}
+{{ define "embedDict" }}
+    {{ $title := .title }}
+    {{ $description := "Which staff members are currently available to help?" }}
+    {{ $color := 12426513 }}
 
-{{ $fieldNameAvailable := "Ready to Help!" }}
-{{ $fieldNameAway := "Away" }}
-{{ $fieldValueEmpty := "(none)" }}
+    {{ $fieldNameAvailable := "Ready to Help!" }}
+    {{ $fieldNameAway := "Away" }}
+    {{ $fieldInline := true }}
 
-{{ $fieldValueAvailable := $fieldValueEmpty }}
-{{ $fieldValueAway := $fieldValueEmpty }}
-{{ $fieldInline := true }}
+    {{ $fieldAvailable := (sdict "name" $fieldNameAvailable "value" .available "inline" $fieldInline) }}
+    {{ $fieldAway := (sdict "name" $fieldNameAway "value" .away "inline" $fieldInline) }}
 
-{{ $fieldAvailable := (sdict "name" $fieldNameAvailable "value" $fieldValueAvailable "inline" $fieldInline) }}
-{{ $fieldAway := (sdict "name" $fieldNameAway "value" $fieldValueAway "inline" $fieldInline) }}
-{{ $fields := (cslice
-        $fieldAvailable
-        $fieldAway
-    )
-}}
+    {{ $fields := (cslice
+            $fieldAvailable
+            $fieldAway
+        )
+    }}
 
-{{ $embedDict := (sdict
+    {{ .Set "result" (sdict
+        "title" $title
+        "description" $description
+        "color" $color
+        "fields" $fields
+    ) }}
+{{ end }}
+
+{{ template "embedDict" ($embedDict := sdict
     "title" $embedTitle
-    "description" $embedDescription
-    "color" $embedColor
-    "footer" $embedFooter
-    "fields" $fields
+    "available" $fieldValueAvailable
+    "away" $fieldValueAway
 ) }}
 
 {{ $reactMessageId := .ExecData.messageId }}
@@ -47,7 +50,7 @@
 
 {{/* initial setup */}}
 {{ if not .ExecData }}
-    {{ $embed := cembed $embedDict }}
+    {{ $embed := cembed $embedDict.result }}
 
     {{ $messageId := sendMessageRetID nil $embed }}
 
@@ -63,23 +66,21 @@
         {{ if eq $embed.Title $embedTitle }}
             {{ if eq $reactEmoji $emojiAvailable }}
                 {{ if $isReactionAdded }}
+                    reaction added
                     {{ $fieldValueAvailable = joinStr "\n" $reactUser.Mention }}
                 {{ else }}
+                    reaction removed
                     {{ $fieldValueAway = joinStr "\n" $reactUser.Mention }}
                 {{ end }}
             {{ end }}
 
-            {{ $fieldAvailable := (sdict "name" $fieldNameAvailable "value" $fieldValueAvailable "inline" $fieldInline) }}
-            {{ $fieldAway := (sdict "name" $fieldNameAway "value" $fieldValueAway "inline" $fieldInline) }}
-            {{ $fields := (cslice
-                    $fieldAvailable
-                    $fieldAway
-                )
-            }}
+            {{ template "embedDict" ($embedDict = sdict
+                "title" $embedTitle
+                "available" $fieldValueAvailable
+                "away" $fieldValueAway
+            ) }}
 
-            {{ $embedDict.Set "fields" $fields }}
-
-            {{ editMessage nil $reactMessageId (complexMessageEdit "embed" $embedDict) }}
+            {{ editMessage nil $reactMessageId (complexMessageEdit "embed" $embedDict.result) }}
         {{ end }}
     {{ end }}
 {{ end }}
