@@ -25,7 +25,8 @@
 {{ $targetMessageId := .ExecData.targetMessageId }}
 {{ $targetEmoji := .ExecData.emoji }}
 {{ $isReactionAdded := .ExecData.isReactionAdded }}
-{{ $targetUser := .ExecData.user }}
+{{ $targetUserId := .ExecData.userId }}
+{{ $targetUser := userArg $targetUserId }}
 
 {{ $embedDict := (sdict
     "title" $embedTitle
@@ -46,7 +47,14 @@
 
     {{ range $index, $embed := $targetMessage.Embeds }}
         {{ if eq $embed.Title $embedTitle }}
+            {{ $fields := (cslice
+                (sdict "name" $fieldAvailableName "value" $targetUser.Mention "inline" $fieldInline)
+                (sdict "name" $fieldAwayName "value" $targetUser.Mention "inline" $fieldInline)
+            ) }}
 
+            {{ $embedDict.Set "fields" $fields }}
+
+            {{ editMessage nil $targetMessageId (complexMessageEdit "embed" $embedDict) }}
         {{ end }}
     {{ end }}
 {{ end }}
