@@ -7,7 +7,7 @@
 {{ $awayEmoji := "📴" }}
 {{ $removeEmoji := "🛑" }}
 
-{{ $messageId := .Reaction.MessageID }}
+{{ $targetMessageId := .Reaction.MessageID }}
 {{ $operation := "" }}
 {{ $isReactionAdded := .ReactionAdded }}
 {{ $user := .Reaction.UserID }}
@@ -22,7 +22,7 @@
 
 {{ if $operation }}
     {{ execCC $embedCmd nil 0 (sdict
-        "messageId" $messageId
+        "targetMessageId" $targetMessageId
         "operation" $operation
         "isReactionAdded" $isReactionAdded
         "user" $user

@@ -5,10 +5,10 @@
 {{ $fieldAvailableName := "Ready to Help!" }}
 {{ $fieldAwayName := "Away" }}
 
-{{ $updateMessageId := .ExecData.messageId }}
-{{ $updateOperation := .ExecData.operation }}
+{{ $targetMessageId := .ExecData.targetMessageId }}
+{{ $operation := .ExecData.operation }}
 {{ $isReactionAdded := .ExecData.isReactionAdded }}
-{{ $updateUser := .ExecData.user }}
+{{ $targetUser := .ExecData.user }}
 
 {{/* initial setup */}}
 {{ if not .ExecData }}
@@ -24,9 +24,11 @@
 
     {{ sendMessage nil $embed }}
 {{ else }}
-    {{ $updateMessage := getMessage nil $updateMessageId }}
+    {{ $targetMessage := getMessage nil $targetMessageId }}
 
-    {{ range $index, $element := $updateMessage.Embeds }}
-        {{ $index }} : {{ $element }}
+    {{ range $index, $embed := $targetMessage.Embeds }}
+        {{ if eq $embed.Title $embedTitle }}
+
+        {{ end }}
     {{ end }}
 {{ end }}
