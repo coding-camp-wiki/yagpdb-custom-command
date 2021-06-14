@@ -2,8 +2,7 @@
 {{ $embedDescription := "Which staff members are currently available to help?" }}
 {{ $embedColor := 12426513 }}
 
-{{/* {{ $availableEmoji := "📳" }} */}}
-{{ $availableEmoji := "💚" }}
+{{ $availableEmoji := "📳" }}
 {{ $awayEmoji := "📴" }}
 {{ $removeEmoji := "🛑" }}
 
@@ -39,7 +38,11 @@
     {{ $embedDict.Set "fields" $fieldsEmpty }}
     {{ $embed := cembed $embedDict }}
 
-    {{ sendMessage nil $embed }}
+    {{ $messageId := sendMessageRetID nil $embed }}
+
+    {{ range $emojiSet }}
+        {{ addMessageReactions nil $messageId . }}
+    {{ end }}
 
 {{/* update existing embed, if present, based on expected emojis */}}
 {{ else if in $emojiSet $targetEmoji }}
