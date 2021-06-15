@@ -97,13 +97,14 @@
         {{ addMessageReactions nil $messageId . }}
     {{ end }}
 
-    {{ deleteTrigger 1 }}
+    {{ deleteTrigger 0 }}
 
 {{/* update existing embed, if present, based on expected emojis */}}
 {{ else if and (in $emojiSet $reactEmoji) ($isReactionAdded) }}
     {{ $reactMessage := getMessage nil $reactMessageId }}
 
     {{ range $index, $embed := $reactMessage.Embeds }}
+        {{/* if applicable embed found */}}
         {{ if eq $embed.Title $settings.title }}
             {{/* get current field values */}}
             {{ range $embed.Fields }}
@@ -151,10 +152,7 @@
             ) }}
 
             {{ editMessage nil $reactMessageId (complexMessageEdit "embed" $embedDict.result) }}
+            {{ deleteMessageReaction nil $reactMessageId $reactUserId $reactEmoji }}
         {{ end }}
     {{ end }}
-{{ end }}
-
-{{ if $isReactionAdded }}
-    {{ deleteMessageReaction nil $reactMessageId $reactUserId $reactEmoji }}
 {{ end }}
