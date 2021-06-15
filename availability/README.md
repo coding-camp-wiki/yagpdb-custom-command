@@ -2,7 +2,7 @@
 
 ## What is it?
 
-<img alt="Demo Screenshot" src="availability-demo.png" height="auto" max-width="400px" />
+<img alt="Demo Screenshot" src="availability-demo.png" height="auto" width="420px" />
 
 A cute little embed that allows staff to mark whether they're available or away using reactions.
 
