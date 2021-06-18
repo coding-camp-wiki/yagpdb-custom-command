@@ -5,18 +5,15 @@
     To get emoji identifiers, type \:emoji:
 */}}
 
-    {{/* "allowedRoles" (cslice
-        831976600073404486
-    ) */}}
-
 {{ $settings := (sdict
     "allowedRoles" (cslice
-        111
+        831976600073404486
     )
     "protectedEmoji" (cslice
         "mod_check:840258374926073936"
         "mod_uncheck:840258375018741831"
     )
+    "showWarning" false
 ) }}
 
 {{ $reactionEmoji := .Reaction.Emoji }}
@@ -36,7 +33,9 @@
     {{ if not $allowed }}
         {{ deleteMessageReaction nil .Reaction.MessageID .Reaction.UserID $reactionEmojiDeleteFormat }}
 
-        {{ $warningID := sendMessageRetID nil (printf "Sorry, <%s> reactions are reserved for staff use" $reactionEmojiSendFormat) }}
-        {{ deleteMessage nil $warningID 5 }}
+        {{ if $settings.showWarning }}
+            {{ $warningID := sendMessageRetID nil (printf "Sorry, <%s> reactions are reserved for staff use" $reactionEmojiSendFormat) }}
+            {{ deleteMessage nil $warningID 5 }}
+        {{ end }}
     {{ end }}
 {{ end }}
