@@ -1,3 +1,3 @@
-# YAGPDB Custom Commands for Coding Camp
+# YAGPDB Custom Commands
 
-Work in progress. More info coming soon.
+**Deprecated.** This repo has been merged with a duplicate YAGPDB custom commands repo and now lives at https://github.com/rp-magrathea/altair.
